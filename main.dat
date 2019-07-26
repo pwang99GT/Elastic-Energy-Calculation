@@ -1,0 +1,60 @@
+;Unit
+;Length: mm
+;Time: s
+;Weight: g
+;force: 1e-6N
+;stress: Pa
+;energy: 1e-6 mJ
+new
+
+call box_gen.dat
+call contact_test.dat
+call gen_finalPSD.dat
+call compress_method.dat
+;box_gen
+cylinder_gen
+ball_gen_fPSD
+delete_out_cylinder
+ 
+property density 2.75e-3 kn 3.0e6 ks 3.0e6 friction 0.5 range id 1 150000
+
+plot creat view_1
+
+plot add wall  range id 5 7 on
+plot add ball lcyan cforce red green active on
+
+set random 63216
+set dt dscale
+plot set mag 1
+set plot avi size 640 480 ;set to avi, specify size
+movie avi_open file box_model_compmethd_1e-3.avi
+movie step 20 1 file box_model_compmethd_1e-3.avi
+
+plot close view_1
+
+
+
+
+initial radius mul 10 range id 1 150000
+
+set gravity 0 0 -9.8e3
+delete_out_cylinder
+cycle 1000 calm 2
+
+cycle 5000
+property density 2.75e-3 kn 0.4e9 ks 0.4e9 friction 0.5 range id 1 150000
+cycle 25000
+
+;delete_float_particle
+Wall property xv   0.0   yv  0.0    zv -1.0e-3  range id = 5	
+contact_test
+history id 1 wall zforce id = 5
+history id 2 wall zforce id = 6
+history id 3 distance_TB 
+stress_control
+
+
+movie avi_close file box_model_compmethd_1e-3.avi
+history write 1 2 3 file d14_comp_force_63216.txt
+
+save end_test

@@ -1,0 +1,268 @@
+def wall_compression
+	array num_ball(180)
+	array volume(180)
+	array cn_number(180)
+	array cn_bw_number(180)
+	store_start = 1
+	compression_vel = -5e-4
+	compression_dis = 0.0
+	test_velocity = -2.5e-4
+	
+	command
+		Wall property xv   0.0   yv  0.0    zv compression_vel   range id = 5
+		set gravity 0 0 -9.8e3
+	end_command
+
+	
+	stage1_dis = 0
+	stage1_cycle_dis = 0.5
+	stage1_cycles = stage1_cycle_dis/abs(compression_vel)		;compress from 50mm to 10mm
+	
+	
+	loop stage1_dis(1,80)
+		total_dis = stage1_dis*0.5					;each stage compress 0.5mm
+		name_save = 'dis_' + string(total_dis) + '.sav'
+		command
+			cycle stage1_cycles calm 1
+			save @name_save
+		end_command
+		;delete_ball_escaped
+		delete_ball_escaped_cylinder
+
+		;a function to count volume, c.n., deleted ball, c.n. with wall.
+		
+	end_loop
+	
+	command
+		Wall property xv   0.0   yv  0.0    zv 0.0   range id = 5
+		cycle 1500 calm 1
+		solve average 0.005 maximum 1e-10 step 30000
+		save end_ini_com.sav 
+	endcommand
+
+	;delete_ball_escaped
+	delete_ball_escaped_cylinder
+	count_cn_vr_wallcomp
+	
+	command
+		Wall property xv   0.0   yv  0.0    zv test_velocity range id = 5
+	endcommand
+	
+	stage2_cycles = 0.3/abs( test_velocity )		; each stage compress 0.3mm
+	stage1_dis = (stage1_dis-1)*stage1_cycle_dis;		
+	loop stage2_dis(1,10)
+		total_dis = stage1_dis+stage2_dis*0.3
+		name_save = 'dis_' + string(total_dis) + '.sav'
+		command
+			cycle stage2_cycles
+			solve average 0.01 maximum 1e-10 step 20000
+			save @name_save
+		end_command
+	
+		count_cn_vr_wallcomp
+	endloop
+	
+	store_end = store_start -1
+	status=open('num_ball.txt', 1, 1)
+	status=write(num_ball, store_end  )
+	status=close
+
+	status=open('vi.txt', 1, 1)
+	status=write(volume,  store_end  )
+	status=close
+
+	status=open('cn_number.txt', 1, 1)
+	status=write(cn_number, store_end )
+	status=close
+
+	status=open('count_cp_bw.txt', 1, 1)
+	status=write(cn_bw_number,  store_end   )
+	status=close	
+	
+	
+end
+
+;------------------------------------------------------------------------------------------------------
+def delete_ball_escaped 
+	bp =  ball_head
+	loop while bp # null
+		bnext=b_next(bp)
+		x_pos_bp = b_x(bp)
+		y_pos_bp = b_y(bp)
+		z_pos_bp = b_z(bp)
+		if abs(x_pos_bp) > box_size1
+			ii = b_delete( bp )
+		end_if
+
+		if abs(y_pos_bp) > box_size1
+			ii = b_delete( bp )
+		end_if
+
+		if z_pos_bp < box_height2
+			ii = b_delete( bp )
+		end_if
+
+		if z_pos_bp > (box_height1 - stage1_dis )
+			ii = b_delete( bp )
+		end_if
+		bp = bnext
+	endloop
+
+end
+
+;------------------------------------------------------------------------------------------------------
+def count_cn_vr_wallcomp
+
+if cylinder_sample =1
+	current_V = pi*radius_wp^2*(2*box_height1-total_dis )		;cylinder shape
+else		
+	current_V = (2*box_size1)^2*(2*box_height1-total_dis )		;square shape
+end_if
+
+cp = contact_head
+count_cp = 0
+count_cp_bw = 0
+
+loop while cp # null
+	entity_1 = c_ball1(cp)
+	entity_2 = c_ball2(cp)
+	entity_type_1 = pointer_type(entity_1 )
+	entity_type_2 = pointer_type(entity_2 )
+	entity_tot = entity_type_1 + entity_type_2 ;
+	if entity_tot = 200
+		count_cp = count_cp+1
+	end_if
+
+	if entity_tot = 201
+		count_cp_bw = count_cp_bw +1
+	end_if
+
+	 cp = c_next(cp)
+end_loop
+
+bp = ball_head
+current_ball = 0
+loop while bp # null
+	current_ball = current_ball +1
+
+	bp = b_next(bp)
+endloop
+
+num_ball(store_start ) = string(current_ball)
+volume(store_start ) = string(current_V )
+cn_number(store_start )= string(count_cp)
+cn_bw_number(store_start ) = string(count_cp_bw )
+store_start = store_start +1
+
+end
+
+;------------------------------------------------------------------------------------------------------
+def delete_ball_escaped_cylinder
+	bp =  ball_head
+	loop while bp # null
+		bnext=b_next(bp)
+		x_pos_bp = b_x(bp)
+		y_pos_bp = b_y(bp)
+		z_pos_bp = b_z(bp)
+
+		center_pos_dis = sqrt(x_pos_bp^2 + y_pos_bp^2)
+
+		if center_pos_dis > radius_wp
+
+			ii = b_delete( bp )
+
+		end_if
+
+		if z_pos_bp > (box_height1 - total_dis)
+			ii = b_delete( bp )
+		end_if
+
+		bp = bnext
+	endloop
+end
+;------------------------------------------------------------------------------------------------------
+def stress_control
+	array loading_force_array(10000)
+	array loading_distance(10000)
+	compression_vel = -2.5e-4
+	compression_dis = 0.0
+	test_velocity = -2.5e-4		
+	target_force= pi*radius_wp^2*0.389671213e6
+	cycle_number= 5
+
+
+	loop ii(1,1000000)
+		command
+			Wall property xv   0.0   yv  0.0    zv compression_vel   range id = 5
+			cycle cycle_number
+			Wall property xv   0.0   yv  0.0    zv 0.0   range id = 5
+			cycle 100
+			
+		end_command
+		distance_TB = distance_TB-abs(compression_vel)*cycle_number
+		distance_comp = 1.0*ii*cycle_number*abs(compression_vel)
+		loading_wall = find_wall(5)
+		loading_force = w_zfob(loading_wall)
+		
+
+		SECTION		
+		if target_force<abs(loading_force)
+			try_time =0
+			loop while target_force<abs(loading_force)
+				command
+					cycle 2000
+				end_command
+				loading_force = w_zfob(loading_wall)
+				try_time = try_time +1
+				if try_time >5
+					loading_force_array(ii) = string(w_zfob(loading_wall))
+					loading_distance(ii) = string( distance_comp  )
+					exit section
+				end_if
+			end_loop
+		end_if
+		loading_force_array(ii) = string(w_zfob(loading_wall))
+		loading_distance(ii) = string( distance_comp  )
+		
+		
+	end_loop
+	ENDSECTION
+
+	shear_energy = 0
+	normal_energy = 0
+	ball_kn = 0.4e9
+	ball_ks = 0.4e9
+	cp=contact_head
+
+	loop while cp # null
+		check_type1 = c_ball1( cp )
+		check_type2 = c_ball2( cp )
+		check_type = pointer_type(check_type1 )+pointer_type(check_type2)
+		
+		if check_type = 200
+
+			mag_shearforce =sqrt(c_vsforce(cp,1)^2+c_vsforce(cp,2)^2+c_vsforce(cp,3)^2)
+			normal_energy = normal_energy + (c_nforce(cp))^2/2/ball_kn*2
+			shear_energy  = shear_energy  + mag_shearforce^2/2/ball_ks*2
+		else
+			mag_shearforce =sqrt(c_vsforce(cp,1)^2+c_vsforce(cp,2)^2+c_vsforce(cp,3)^2)
+			normal_energy = normal_energy + (c_nforce(cp))^2/2/ball_kn
+			shear_energy  = shear_energy  + mag_shearforce^2/2/ball_ks
+		end_if
+			
+		cp = c_next(cp) 
+	end_loop
+
+	
+	status=open('loading_force.txt', 1, 1)
+	status=write(loading_force_array, ii )
+	status=close
+
+	status=open('loading_distance.txt', 1, 1)
+	status=write(loading_distance,  ii )
+	status=close
+
+
+	
+	
+end

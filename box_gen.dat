@@ -1,0 +1,198 @@
+def  box_gen
+
+box_size1 = 50			; half length of the box
+box_size2 = -box_size1		; negative half length of the box
+
+box_height1 =2*box_size1	; half  height
+box_height2 =-box_height1	; negative half  height
+
+;the length and widthe of the box is 2*box_size1
+
+;box2_size1=0.9;size of internal box. generate two boxes and put balls between them to avoid balls overlap with cluster.
+;box2_size2=-box2_size1
+
+command
+	;the walls are defined in the sequeence that front, behind, left, right, up, bottom
+	wall id=1 kn=1e50 &
+	face (box_size2, box_size2 , box_height2 ) (box_size2, box_size2 , box_height1 ) (box_size1, box_size2 , box_height1 ) (box_size1, box_size2 , box_height2 )
+	
+	wall id=2 kn=1e50 &
+	face (box_size2, box_size1, box_height2 ) (box_size1, box_size1 , box_height2 ) (box_size1, box_size1 , box_height1 ) (box_size2, box_size1 , box_height1 ) 
+
+	wall id=3 kn=1e50 &
+	face (box_size2,box_size2, box_height2 ) (box_size2,box_size1, box_height2 ) (box_size2,box_size1, box_height1 ) (box_size2,box_size2, box_height1 ) 
+
+	wall id=4 kn=1e50 &
+	face (box_size1,box_size2, box_height2 ) (box_size1,box_size2, box_height1 ) (box_size1,box_size1, box_height1 ) (box_size1,box_size1, box_height2 ) 
+ 
+	wall id=5 kn=1e50 &
+	face (box_size2,box_size2, box_height1 ) (box_size2,box_size1, box_height1 ) (box_size1,box_size1, box_height1 ) (box_size1 , box_size2, box_height1 )
+
+	wall id=6 kn=1e50 &   
+	face (box_size2,box_size2, box_height2 ) (box_size1,box_size2, box_height2 ) (box_size1,box_size1, box_height2 ) (box_size2 , box_size1, box_height2 )
+
+
+	wall id=7 kn=1e50 &
+	face (box_size2,box_size2, box_height1 ) (box_size2,box_size1, box_height1 ) (box_size1,box_size1, box_height1 ) (box_size1 , box_size2, box_height1 )
+
+
+	;the walls are defined in the sequeence that front, behind, left, right, up, bottom
+	;counterclockwise as seen from the active side
+	
+;	wall id=7 kn=1e50 &
+;	face (box2_size2,box2_size2,box2_size2)  (box2_size1,box2_size2,box2_size2) (box2_size1,box2_size2,box2_size1) (box2_size2,box2_size2,box2_size1) 
+	
+;	wall id=8 kn=1e30 &
+;	face (box2_size2,box2_size1,box2_size2) (box2_size2,box2_size1,box2_size1) (box2_size1,box2_size1,box2_size1)  (box2_size1,box2_size1,box2_size2) 
+
+;	wall id=9 kn=1e30 &
+;	face (box2_size2,box2_size2,box2_size2) (box2_size2,box2_size2,box2_size1)  (box2_size2,box2_size1,box2_size1) (box2_size2,box2_size1,box2_size2)   
+
+;	wall id=10 kn=1e30 &
+;	face (box2_size1,box2_size2,box2_size2) (box2_size1,box2_size1,box2_size2) (box2_size1,box2_size1,box2_size1) (box2_size1,box2_size2,box2_size1)    
+
+;	wall id=11 kn=1e30 &
+;	face (box2_size2,box2_size2,box2_size1)  (box2_size1,box2_size2,box2_size1) (box2_size1,box2_size1,box2_size1) (box2_size2,box2_size1,box2_size1)  
+
+;	wall id=12 kn=1e30 &
+;	face (box2_size2,box2_size2,box2_size2) (box2_size2,box2_size1,box2_size2)  (box2_size1,box2_size1,box2_size2) (box2_size1,box2_size2,box2_size2)  
+
+
+end_command
+
+end
+;-------------------------------define arrary to store volume and coordination number---------------------------------------------
+
+def ball_gen
+
+level_height = box_height1 * 2.0 / 10
+level_number =1000
+
+loop level (1,10)
+
+	lower_level =box_height2+(level-1)*level_height
+	upper_level =box_height2+level*level_height
+	
+
+	lower_id = 1+level_number*(level-1)
+	upper_id = level_number*level
+	
+	command
+		gen x= (box_size2,box_size1) y= (box_size2,box_size1) z= ( lower_level , upper_level ) rad 0.02 0.02  id lower_id  upper_id 
+
+	end_command
+
+
+end_loop
+
+
+end
+;-------------------------------define arrary to store volume and coordination number---------------------------------------------
+
+;def gen_cn_para
+;	
+;	void_step = 20
+;	
+;	array volume(20)
+;	array cn_number(20)
+;	array cn_bw_number(20)
+;
+;end
+
+
+;-------------------------------define function to delete balls out side the box---------------------------------------------
+
+def delete_ball_outside
+	bp =  ball_head
+	loop while bp # null
+		x_pos_bp = b_x(bp)
+		y_pos_bp = b_y(bp)
+		z_pos_bp = b_z(bp)
+		bnext = b_next(bp)
+
+		if abs(x_pos_bp) > box_size1
+			ii = b_delete( bp )
+		end_if
+
+		if abs(y_pos_bp) > box_size1
+			ii = b_delete( bp )
+		end_if
+		 
+		if abs(z_pos_bp) > box_height1 
+			ii = b_delete( bp )
+		end_if		
+		bp = bnext
+	end_loop
+
+
+end
+;-----------------------------generation of cylinder model---------------------------------------------------------------
+
+def cylinder_gen
+radius_wp = 35.0
+box_size1 = 35.0	
+box_size2 = -box_size1
+
+box_height1 =11
+box_height2 =-box_height1
+cylinder_sample = 1
+
+command
+	wall id=1 kn=1e50 type cylinder end1 0 0 box_height2 end2 0 0 box_height1 rad radius_wp radius_wp
+	
+	wall id=5 kn=1e50 &
+	face (box_size2,box_size2, box_height1 ) (box_size2,box_size1, box_height1 ) (box_size1,box_size1, box_height1 ) (box_size1 , box_size2, box_height1 )
+
+	wall id=6 kn=1e50 &   
+	face (box_size2,box_size2, box_height2 ) (box_size1,box_size2, box_height2 ) (box_size1,box_size1, box_height2 ) (box_size2 , box_size1, box_height2 )
+	
+	
+end_command
+sample_height = box_height1-box_height2
+
+end
+
+;-----------------------------delete outside cylinder---------------------------------------------------------------
+
+def delete_out_cylinder
+
+	bp = ball_head
+	loop while bp # null
+		x_pos_bp = b_x(bp)
+		y_pos_bp = b_y(bp)
+		z_pos_bp = b_z(bp)
+		
+		z_pos_dis = z_pos_bp - (box_height2+sample_height/2)
+		center_pos_dis = sqrt(x_pos_bp^2 + y_pos_bp^2)
+
+		bnext = b_next(bp)
+
+		if abs(z_pos_dis) >(sample_height/2) 
+			ii = b_delete( bp )
+		end_if
+		if center_pos_dis > radius_wp
+			ii = b_delete( bp )
+		end_if
+		bp = bnext
+	end_loop
+
+end
+;-----------------------------delete floating particle ---------------------------------------------------------------
+def delete_float_particle
+	float_particle = 0
+
+	bp = ball_head
+	loop while bp # null
+		bnext = b_next(bp)
+		
+		cp = b_clist( bp ) 
+		if cp # null
+			
+		else
+			ii= b_delete( bp )
+			float_particle = float_particle +1
+		end_if
+		bp=bnext 
+	end_loop
+
+end

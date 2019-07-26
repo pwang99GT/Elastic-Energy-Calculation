@@ -1,0 +1,72 @@
+def ball_gen_fPSD
+
+
+
+percent_number = round(level_number/100)
+
+array ball_gen_bound14(101)
+status=open('size_bound14.dat', 0, 1)
+status=read(ball_gen_bound14,101  )
+status=close
+
+array ball_gen_number(100)
+status=open('particle_number14.dat', 0, 1)
+status=read(ball_gen_number,100  )
+status=close
+
+if cylinder_sample =1
+	size_ratio = 4.0/pi
+end_if
+lower_id = 1
+loop level (1,100)
+
+	
+	loop_number = round(float(ball_gen_number(level))*size_ratio)
+	loop_radius1 = float(ball_gen_bound14(level))/2.0/10.0
+	loop_radius2 = float(ball_gen_bound14(level+1))/2.0/10.0
+	upper_id = lower_id+loop_number-1
+	
+	command
+		gen x= (box_size2,box_size1) y= (box_size2,box_size1) z=(box_height2 ,box_height1 ) rad loop_radius1 loop_radius2 id lower_id upper_id
+	end_command
+	
+	lower_id=lower_id+loop_number
+	
+	
+	
+	
+;	lower_level =box_height2+(level-1)*level_height
+;	upper_level =box_height2+level*level_height
+	
+;	gen_percent = 1
+;	loop gen_percent (1,100)
+		
+		
+;		lower_id = 1+level_number*(level-1)+percent_number *(gen_percent-1)
+;		upper_id = level_number*(level-1)+percent_number *gen_percent
+;		
+;		lower_radius = float(ball_gen_bound14(gen_percent))/2/90				; /2 get radius. /90 to get small size and then multiply
+;		upper_radius = float(ball_gen_bound14(gen_percent+1))/2/90
+;	
+;	command
+;		gen no_shadow x= (box_size2,box_size1) y= (box_size2,box_size1) z= ( lower_level , upper_level ) rad lower_radius upper_radius id lower_id  upper_id 
+;
+;	end_command
+;	end_loop
+
+end_loop
+
+end
+
+
+def calm_down
+	calm_step=1000
+	calm_ini= 1
+	loop calm_ini (1,calm_step)
+		command
+			cycle 5 calm 5
+		end_command
+		
+	end_loop
+
+end

@@ -1,0 +1,83 @@
+def count_cn_vr
+
+v0 = (2*box_size1)^2*distance_TB 
+cp = contact_head
+
+count_cp = 0
+count_cp_bw = 0
+
+loop while cp # null
+
+	entity_1 = c_ball1(cp)
+	entity_2 = c_ball2(cp)
+	entity_type_1 = pointer_type(entity_1 )
+	entity_type_2 = pointer_type(entity_2 )
+	entity_tot = entity_type_1 + entity_type_2 ;
+
+
+	if entity_tot = 200
+		count_cp = count_cp+1
+	end_if
+
+	if entity_tot = 201
+		count_cp_bw = count_cp_bw +1
+	end_if
+
+		
+	 cp = c_next(cp)
+end_loop
+
+volume(1) = string(v0)
+cn_number(1)= string(count_cp)
+cn_bw_number(1) = string(count_cp_bw )
+
+compress_w_address = find_wall(5) 		
+compress_speed = w_zvel( compress_w_address )	
+cycle_interval = abs(1.0/compress_speed)
+
+loop  ii (2, void_step ) 
+	command
+		cycle cycle_interval
+	end_command
+	distance_TB = distance_TB - 1.0
+	vi = (2*box_size1)^2*distance_TB 
+	cp = contact_head
+	count_cp=0
+	count_cp_bw = 0
+	
+	loop while cp # null
+		entity_1 = c_ball1(cp)
+		entity_2 = c_ball2(cp)
+		entity_type_1 = pointer_type(entity_1 )
+		entity_type_2 = pointer_type(entity_2 )
+		entity_tot = entity_type_1 + entity_type_2 ;
+	
+		if entity_tot = 200
+			count_cp = count_cp+1
+		end_if
+		if entity_tot = 201
+			count_cp_bw = count_cp_bw +1
+		end_if
+		
+		 cp = c_next(cp)
+	end_loop
+	volume(ii) = string(vi)
+	cn_number(ii)= string(count_cp)
+	cn_bw_number(ii) = string(count_cp_bw )
+end_loop
+
+
+status=open('vi.txt', 1, 1)
+status=write(volume, void_step  )
+status=close
+
+status=open('cn_number.txt', 1, 1)
+status=write(cn_number, void_step  )
+status=close
+
+status=open('count_cp_bw.txt', 1, 1)
+status=write(cn_bw_number, void_step  )
+status=close
+
+
+end

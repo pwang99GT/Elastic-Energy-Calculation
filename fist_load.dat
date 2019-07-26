@@ -1,0 +1,11 @@
+;fname: fist_load.dat
+;
+; ===========================================================================
+  def ft_setenv
+    environment('fist') = 'c:\\temp\\MyProj\\PFC4.0\\fist'
+  end
+  ft_setenv
+  call %fist%\fist_new.dvr
+; ===========================================================================
+return
+;EOF: fist_load.dat
